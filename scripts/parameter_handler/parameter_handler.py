@@ -29,6 +29,8 @@ class param_handler(object):
         self.state_dim = 0
         self.action_dim = 0
         self.control_rate = 0 #[Hz]
+        self.path_to_weights = "NO PATH DEFINED"
+        self.weights_ID = 0
 
         # Exploration Noise
         self.OU_mu = 0.0
@@ -36,8 +38,6 @@ class param_handler(object):
         self.OU_sigma = 0.0
         self.epsilon = 0.0
         self.EXPLORE = 0.0
-        self.use_joystick = False
-        self.use_ANN = False
 
         # environment
         self.state_space_version = 1
@@ -50,12 +50,9 @@ class param_handler(object):
         # reward calculation
         self.reward_version = 0
         self.goal_max_dist = 0.0
-        self.goal_area_x = 0.0
-        self.goal_area_y = 0.0
-        self.goal_area_angle = 0.0
-        self.goal_point_creator_x_area = 0.0
-        self.goal_point_creator_y_area = 0.0
-        self.goal_point_creator_step = 0.0
+        self.goal_area_x = 0.1
+        self.goal_area_y = 0.1
+        self.goal_area_angle = 0.1
         self.distance_reward_factor = 0.0
         self.episode_timeout = 0.0
 
@@ -68,7 +65,7 @@ class param_handler(object):
         self.visu_debug_infos = False
         self.visu_show_step_data = False
         self.experiment_ID = 99.99
-        self.log_path = "NOT PATH DEFINED"
+        self.log_path = "NO PATH DEFINED"
 
 
     def read_parameter(self, filename):
@@ -81,6 +78,8 @@ class param_handler(object):
         self.state_dim = self.config.getint("hyperparameter", "state_dim")
         self.action_dim = self.config.getint("hyperparameter", "action_dim")
         self.control_rate = self.config.getint("hyperparameter", "control_rate")
+        self.path_to_weights = self.config.get("hyperparameter", "path_to_weights")
+        self.weights_ID = self.config.getint("hyperparameter", "weights_ID")
 
         # exploration noise
         self.EXPLORE = self.config.getfloat("exploration_noise", "explore")
@@ -88,8 +87,6 @@ class param_handler(object):
         self.OU_theta = self.config.getfloat("exploration_noise", "ou_theta")
         self.OU_sigma = self.config.getfloat("exploration_noise", "ou_sigma")
         self.epsilon = self.config.getfloat("exploration_noise", "epsilon")
-        self.use_joystick = self.config.getboolean("exploration_noise", "use_joystick")
-        self.use_ANN = self.config.getboolean("exploration_noise", "use_ANN")
 
         # environment
         self.state_space_version = self.config.getint("environment", "state_space_version")
@@ -102,14 +99,11 @@ class param_handler(object):
         # reward calculation
         self.reward_version = self.config.getint("reward_calculation", "reward_version")
         self.goal_max_dist = self.config.getfloat("reward_calculation", "goal_max_dist")
+        self.distance_reward_factor = self.config.getfloat("reward_calculation", "distance_reward_factor")
+        self.episode_timeout = self.config.getfloat("reward_calculation", "episode_timeout")
         self.goal_area_x = self.config.getfloat("reward_calculation", "goal_area_x")
         self.goal_area_y = self.config.getfloat("reward_calculation", "goal_area_y")
         self.goal_area_angle = self.config.getfloat("reward_calculation", "goal_area_angle")
-        self.goal_point_creator_x_area = self.config.getfloat("reward_calculation", "goal_point_creator_x_area")
-        self.goal_point_creator_y_area = self.config.getfloat("reward_calculation", "goal_point_creator_y_area")
-        self.goal_point_creator_step = self.config.getfloat("reward_calculation", "goal_point_creator_step")
-        self.distance_reward_factor = self.config.getfloat("reward_calculation", "distance_reward_factor")
-        self.episode_timeout = self.config.getfloat("reward_calculation", "episode_timeout")
 
         # goal point list
         self.gpl_index = self.config.getint("gpl", "gpl_index")
@@ -132,6 +126,8 @@ class param_handler(object):
         print("State dimension: " + str(self.state_dim))
         print("Action dimension: " + str(self.action_dim))
         print("Control Rate: " + str(self.control_rate))
+        print("Path to weights: " + str(self.path_to_weights))
+        print("Weights ID: " + str(self.weights_ID))
 
         print("#############ExplorationNoise#####################")
         print("EXPLORE: " + str(self.EXPLORE))
@@ -139,8 +135,6 @@ class param_handler(object):
         print("OU theta: " + str(self.OU_theta))
         print("OU sigma: " + str(self.OU_sigma))
         print("epsilon: " + str(self.epsilon))
-        print("use_joystick: " + str(self.use_joystick))
-        print("use_ANN: " + str(self.use_ANN))
 
         print("##############Environment#####################")
         print("state_space_version: " + str(self.state_space_version))
@@ -153,14 +147,11 @@ class param_handler(object):
         print("#############Reward Calculation###################")
         print("reward_version: " + str(self.reward_version))
         print("goal_max_dist: " + str(self.goal_max_dist))
+        print("distance_reward_factor: " + str(self.distance_reward_factor))
+        print("episode_timeout: " + str(self.episode_timeout))
         print("goal_area_x: " + str(self.goal_area_x))
         print("goal_area_y: " + str(self.goal_area_y))
         print("goal_area_angle: " + str(self.goal_area_angle))
-        print("goal_point_creator_x_area: " + str(self.goal_point_creator_x_area))
-        print("goal_point_creator_y_area: " + str(self.goal_point_creator_y_area))
-        print("goal_point_creator_step: " + str(self.goal_point_creator_step))
-        print("distance_reward_factor: " + str(self.distance_reward_factor))
-        print("episode_timeout: " + str(self.episode_timeout))
 
         print("#############Goal Point list###################")
         print("gpl_index: " + str(self.gpl_index))

@@ -3,8 +3,6 @@ import sys
 
 from time import *
 
-from datetime import datetime
-
 import numpy as np
 
 ###################PARAMETER#######################################
@@ -21,16 +19,16 @@ from geometry_msgs.msg import PoseStamped as pose_stamped_msg_type
 
 from rl_msgs.msg import Transition
 
-from rl_srvs.srv import Predict, PredictRequest, PredictResponse
-
 #####################LEARNING#########################################
 from reward_calculator import reward_calculation as RC
 from exploration_noise import exploration_noise_generatorV1 as noise_gen
 from goal_point_generator import goal_point_generator as gpl_gen
+from ann import ANN
 
 
 
-CONFIG_FILE = '/home/'
+
+CONFIG_FILE = 'configuration_1.cfg'
 
 
 def ST_STARTUP():
@@ -77,8 +75,6 @@ def ST_STARTUP():
     global episode_done
 
     global s_t
-
-    global collision
 
 
 
@@ -136,6 +132,11 @@ def ST_EXECUTING():
     global ros_handler
 
     ##########################################
+    #            action_generator            #
+    ##########################################
+    global action_generator
+
+    ##########################################
     #            noise_generator             #
     ##########################################
     global noise_generator
@@ -157,7 +158,7 @@ def ST_EXECUTING():
     global episode_done
     global first_action_in_episode
     global TimeOutOrAway
-    global collision
+    global total_reward
 
     #goal pose
     global goal_pose
@@ -171,10 +172,6 @@ def ST_EXECUTING():
     #Data handling
     global s_t
     global a_t_transition
-
-    global ros_service_predict
-
-
 
 
     params.epsilon -= 1.0 / params.EXPLORE
@@ -198,13 +195,13 @@ def ST_EXECUTING():
         print("Elapsed: " + str(time_elapsed))
 
         #build string for logging
-        log_info = '' + str(params.experiment_ID) + ',' + str(datetime.now()) + ',' + str(params.state_space_version) + \
+        log_info = '' + str(ctime(start_time_episode)) + ',' + str(ctime(end_time_episode)) + ',' + str(time_elapsed) + \
                    ',' + str(step) + ',' + str(params.epsilon) + ',' + str(goal_pose.position.x) + \
                    ',' + str(goal_pose.position.y) + ',' + str(goal_pose.orientation.x) + \
                    ',' + str(goal_pose.orientation.y) + ',' + str(goal_pose.orientation.z) + \
-                   ',' + str(goal_pose.orientation.w) + ',' + str(TimeOutOrAway) + ',' + str(collision) +\
-                   ',' + str(params.use_ANN) + ',' + str(gpl_generator.is_trajectory()) + ',' + str(params.gpl_index) + \
-                   ',' + str(ctime(time()))
+                   ',' + str(goal_pose.orientation.w) + ',' + str(TimeOutOrAway) +\
+                   ',' + str(gpl_generator.is_trajectory()) + ',' + str(params.gpl_index) + \
+                   ',' + str(total_reward)
         #log all data from episode to file for evaluation
         f = open(str(params.log_path) + 'episode.log', 'a+')
         f.write(str(log_info) + "\n")
@@ -212,7 +209,7 @@ def ST_EXECUTING():
 
         TimeOutOrAway = False
         first_action_in_episode = True
-        collision = False
+        total_reward = 0.0
 
         return "ST_RESET_WORLD"
 
@@ -227,19 +224,10 @@ def ST_EXECUTING():
         # get starting state space
         [s_t, tmp] = ros_handler.get_state()
 
-        # Call ROS-Service to get actions for each wheel
-        req = PredictRequest()
+        action = action_generator.generate_action(np.asarray([s_t]))
 
-        # generate ROS-Service request
-        for s in s_t:
-            req.statespace.append(float(s))
-
-        req.statespace_size = params.state_dim
-
-        res = ros_service_predict(req)
-
-        a_t_original_left = res.actions[0]
-        a_t_original_right = res.actions[1]
+        a_t_original_left = action[0][0]
+        a_t_original_right = action[0][1]
 
         # generate exploration noise
         noise_t[0][0] = max(params.epsilon, 0) * noise_generator.get_exploration_noiseV2(a_t_original_left, 1)
@@ -277,8 +265,8 @@ def ST_EXECUTING():
             usable = ros_handler.is_state_space_usable()
         [s_t1, robot_current_map_pose_stamped] = ros_handler.get_state()
 
-        # calculate reward and check if episode is finished
 
+        # calculate reward and check if episode is finished
         [r_t, episode_done, distance_to_goal] = reward_calculator.get_reward(robot_current_map_pose_stamped,
                                                                              goal_pose, s_t1)
 
@@ -290,11 +278,13 @@ def ST_EXECUTING():
             episode_done = False
             TimeOutOrAway = True
 
-
-
         r_t = r_t/10
 
         print("Reward: ", r_t)
+
+        total_reward = total_reward + r_t
+        print("total_reward: ", total_reward)
+
 
         # add data to replay buffer
         current_transition = Transition()
@@ -342,28 +332,17 @@ def ST_EXECUTING():
                         while not usable:
                             usable = ros_handler.is_state_space_usable()
 
-                        #get new s_t for prediction
+                        #get new s_t for action generation
                         [s_t, robot_current_map_pose_stamped] = ros_handler.get_state()
 
                         #calculate starting distance for reward calculation
                         reward_calculator.calc_starting_distance_for_new_goal(robot_current_map_pose_stamped, goal_pose)
 
+            #get action from ANN
+            action = action_generator.generate_action(np.asarray([s_t]))
 
-            # Call ROS-Service to get actions for each wheel
-            req = PredictRequest()
-
-            # generate ROS-Service request
-            for s in s_t:
-                req.statespace.append(float(s))
-
-            req.statespace_size = params.state_dim
-
-            res = ros_service_predict(req)
-
-            a_t_original_left = res.actions[0]
-            a_t_original_right = res.actions[1]
-
-            # print(res)
+            a_t_original_left = action[0][0]
+            a_t_original_right = action[0][1]
 
             # generate exploration noise
             noise_t[0][0] = max(params.epsilon, 0) * noise_generator.get_exploration_noiseV2(a_t_original_left, 1)
@@ -456,21 +435,12 @@ if __name__ == '__main__':
     ##########################################
     rospy.init_node('SimulationHandlerPython', anonymous=False)
 
-    rate = rospy.Rate(params.control_rate)  # 10Hz
+    rate = rospy.Rate(params.control_rate)  #Hz
 
     #Topics
     global pub_transition
     pub_transition = rospy.Publisher('/multi_learning/transitions', Transition, queue_size=10)
 
-    #Services
-    if not params.use_joystick and not params.use_ANN:
-        global ros_service_predict
-        ros_service_predict = rospy.ServiceProxy('/multi_learning/predict', Predict)
-
-        # Wait until service is available
-        print("Waiting for Servive: /multi_learning/predict")
-        rospy.wait_for_service('/multi_learning/predict')
-        print("Service /multi_learning/predict available")
 
     ##########################################
     #              ros_handler               #
@@ -486,14 +456,24 @@ if __name__ == '__main__':
     global noise_generator
     noise_generator = noise_gen.exploration_noise_generator(static_params=False,OU_mu=params.OU_mu,
                                                             OU_theta=params.OU_theta,
-                                                            OU_sigma=params.OU_sigma,use_ANN=params.use_ANN)
+                                                            OU_sigma=params.OU_sigma)
+
+    ##########################################
+    #            action_generator            #
+    ##########################################
+    global action_generator
+    action_generator = ANN.ANN(params.path_to_weights, params.weights_ID)
+
+    if not action_generator.is_init():
+        exit(999)
+
 
     ##########################################
     #           reward_calculator            #
     ##########################################
     global reward_calculator
     reward_calculator = RC.reward_calculator(params.goal_max_dist, params.episode_timeout,
-                                             params.distance_reward_factor, 0.0, params.goal_area_x,
+                                             params.distance_reward_factor, False, params.goal_area_x,
                                              params.goal_area_y, params.goal_area_angle)
 
     ##########################################
@@ -501,15 +481,6 @@ if __name__ == '__main__':
     ##########################################
     global gpl_generator
     gpl_generator = gpl_gen.goal_point_generator(params.gpl_index)
-
-    ##########################################
-    #            obstacle_handler            #
-    ##########################################
-    # Use this only if parameter is set
-    #from obstacle_spawner import obstacle_controler as OC
-    #global obstacle_handler
-    #obstacle_handler = OC.obstacle_controler()
-    #obstacle_handler.spawn_obstacles(list_id=1)
 
 
     ####StartUp####
@@ -529,10 +500,8 @@ if __name__ == '__main__':
     global episode_done
     episode_done = False
 
-    global collision
-    collision = False
-
-
+    global total_reward
+    total_reward = 0.0
 
     ####Reset####
     global reset_world_cnt

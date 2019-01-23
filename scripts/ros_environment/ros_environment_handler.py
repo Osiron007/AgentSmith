@@ -333,19 +333,14 @@ class ros_environment(object):
 
         state_as_nparray = np.zeros([self.state_dim])
 
+        state_as_nparray[0] = self.is_omega_left_wheel/4
+        state_as_nparray[1] = self.is_omega_right_wheel/4
 
-        if self.state_space_version == 1:
+        state_as_nparray[2] = self.goal_position_linear_x/3
+        state_as_nparray[3] = self.goal_position_linear_y/3
 
-            state_as_nparray[0] = self.is_omega_left_wheel/4
-            state_as_nparray[1] = self.is_omega_right_wheel/4
+        state_as_nparray[4] = self.yaw_diff/180
 
-            state_as_nparray[2] = self.goal_position_linear_x/3
-            state_as_nparray[3] = self.goal_position_linear_y/3
-
-            state_as_nparray[4] = self.yaw_diff/180
-
-        else:
-            print("REH: ERROR: STATE SPACE WRONG!!!!!")
 
         #print("GET STATE: X: " + str(self.robot_current_map_pose_stamped.pose.position.x) + " Y: " + str(self.robot_current_map_pose_stamped.pose.position.y))
 
@@ -436,9 +431,6 @@ class ros_environment(object):
             #do the reset
             self.service_reset_simu()
 
-            # launch costmap_node again
-            #os.system('roslaunch neo_2dnav 2dnav.launch')
-
             #wait some time for all nodes to handle reset
             start_time_reset = time()
             time_elapsed = 0.0
@@ -473,9 +465,6 @@ class ros_environment(object):
 
             #do the reset
             self.service_reset_world()
-
-            # launch costmap_node again
-            #os.system('roslaunch neo_2dnav 2dnav.launch')
 
             #wait some time for all nodes to handle reset
             start_time_reset = time()

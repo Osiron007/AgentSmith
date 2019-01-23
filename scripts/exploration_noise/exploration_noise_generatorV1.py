@@ -6,7 +6,7 @@ OU = OU()       #Ornstein-Uhlenbeck Process
 
 class exploration_noise_generator(object):
 
-    def __init__(self,static_params, OU_mu, OU_theta, OU_sigma, use_ANN):
+    def __init__(self,static_params, OU_mu, OU_theta, OU_sigma):
         print("Init exploration noise generator")
 
         #defines if different working points should be generated or not

@@ -4,10 +4,8 @@
 # This file contains functions for reward calculation
 #   public functions:
 #   __init__
-#   goal_point_generator
 #   reset_calculation
-#   get_reward_v1
-#   get_reward_v2
+#   get_reward
 #
 #
 #   helper functions:
@@ -15,18 +13,12 @@
 #
 ########################################################################################################################
 import math
-import rospy
 from time import *
 import numpy as np
 
-import random
-from geometry_msgs.msg import PoseStamped as pose_stamped_msg_type
-from geometry_msgs.msg import Pose as pose_msg_type
-
-
 class reward_calculator(object):
 
-    def __init__(self, max_distence, timeout, reward_factor, reward_time_factor, goal_x_area, goal_y_area, goal_angle_tolerance):
+    def __init__(self, max_distence, timeout, reward_factor, use_crash_prevention, goal_x_area, goal_y_area, goal_area_angle):
 
         #init np random
         np.random.seed(1337)
@@ -34,6 +26,8 @@ class reward_calculator(object):
 
         self.reward = 0.0
         self.episode_done = False
+        self.timeout_occurred = False
+
 
         self.last_distance_to_goal = 0.0
         self.nearest_distance_to_goal = 0.0
@@ -61,6 +55,7 @@ class reward_calculator(object):
 
         #TODO goal_angle_tolerance
         #orientation tolerance quaternion (since v2)
+        #use goal_area_angle
         self.goal_orientation_tolerance_x = 0.05
         self.goal_orientation_tolerance_y = 0.05
         self.goal_orientation_tolerance_z = 0.05
@@ -68,17 +63,15 @@ class reward_calculator(object):
 
 
         #Crash Prevention
-        self.use_crash_prevention = True
+        self.use_crash_prevention = use_crash_prevention
+        self.crash_prevention_occurred = False
 
         #Backward penalty
         self.use_backward_penalty = True
 
+        #Misc
         self.goal_area_reached_cnt = 0
-
         self.first_reward = True
-
-        self.collision = False
-
         self.init = True
 
     def reset_calculation(self):

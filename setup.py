@@ -1,12 +1,13 @@
 ## ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
+## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 
-#from distutils.core import setup
-#from catkin_pkg.python_setup import generate_distutils_setup
+from distutils.core import setup
+from catkin_pkg.python_setup import generate_distutils_setup
 
-#d = generate_distutils_setup(
-#    packages=['async_multi_reinforce_learner'],
-#    scripts=['bin/testrospython.py'],
-#    package_dir={'': 'bin'}
-#)
+# fetch values from package.xml
+setup_args = generate_distutils_setup(
+    package=['agentsmith'],
+    package_dir={'': 'src'}
+)
 
-#setup(**d)
+setup(**setup_args)
