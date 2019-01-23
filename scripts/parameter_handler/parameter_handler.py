@@ -31,6 +31,7 @@ class param_handler(object):
         self.control_rate = 0 #[Hz]
         self.path_to_weights = "NO PATH DEFINED"
         self.weights_ID = 0
+        self.weight_update = 99999
 
         # Exploration Noise
         self.OU_mu = 0.0
@@ -55,6 +56,7 @@ class param_handler(object):
         self.goal_area_angle = 0.1
         self.distance_reward_factor = 0.0
         self.episode_timeout = 0.0
+        self.use_crash_prevention = True
 
         #goal point list
         self.gpl_index = 0
@@ -80,6 +82,7 @@ class param_handler(object):
         self.control_rate = self.config.getint("hyperparameter", "control_rate")
         self.path_to_weights = self.config.get("hyperparameter", "path_to_weights")
         self.weights_ID = self.config.getint("hyperparameter", "weights_ID")
+        self.weight_update = self.config.getint("hyperparameter", "weight_update")
 
         # exploration noise
         self.EXPLORE = self.config.getfloat("exploration_noise", "explore")
@@ -104,6 +107,8 @@ class param_handler(object):
         self.goal_area_x = self.config.getfloat("reward_calculation", "goal_area_x")
         self.goal_area_y = self.config.getfloat("reward_calculation", "goal_area_y")
         self.goal_area_angle = self.config.getfloat("reward_calculation", "goal_area_angle")
+        self.use_crash_prevention = self.config.getboolean("reward_calculation", "use_crash_prevention")
+
 
         # goal point list
         self.gpl_index = self.config.getint("gpl", "gpl_index")
@@ -128,6 +133,7 @@ class param_handler(object):
         print("Control Rate: " + str(self.control_rate))
         print("Path to weights: " + str(self.path_to_weights))
         print("Weights ID: " + str(self.weights_ID))
+        print("Weight update: " + str(self.weight_update))
 
         print("#############ExplorationNoise#####################")
         print("EXPLORE: " + str(self.EXPLORE))
@@ -152,6 +158,7 @@ class param_handler(object):
         print("goal_area_x: " + str(self.goal_area_x))
         print("goal_area_y: " + str(self.goal_area_y))
         print("goal_area_angle: " + str(self.goal_area_angle))
+        print("use_crash_prevention: " + str(self.use_crash_prevention))
 
         print("#############Goal Point list###################")
         print("gpl_index: " + str(self.gpl_index))

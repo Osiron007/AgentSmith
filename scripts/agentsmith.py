@@ -211,6 +211,10 @@ def ST_EXECUTING():
         first_action_in_episode = True
         total_reward = 0.0
 
+        #check if new weights are available after each X episodes
+        if np.mod(episode, params.weight_update) == 0:
+            action_generator.load_new_weights()
+
         return "ST_RESET_WORLD"
 
     if first_action_in_episode:
@@ -473,7 +477,7 @@ if __name__ == '__main__':
     ##########################################
     global reward_calculator
     reward_calculator = RC.reward_calculator(params.goal_max_dist, params.episode_timeout,
-                                             params.distance_reward_factor, False, params.goal_area_x,
+                                             params.distance_reward_factor, params.use_crash_prevention, params.goal_area_x,
                                              params.goal_area_y, params.goal_area_angle)
 
     ##########################################

@@ -144,8 +144,8 @@ class reward_calculator(object):
             if self.use_crash_prevention:
                 print("REWARD CALCULATION: using crash prevention")
                 # check if robot is too close to the border
-                if math.fabs(robot_position_map_frame.pose.position.x) > 1.0 or math.fabs(
-                        robot_position_map_frame.pose.position.y) > 1.0:
+                if math.fabs(robot_position_map_frame.pose.position.x) > 3.0 or math.fabs(
+                        robot_position_map_frame.pose.position.y) > 3.0:
                     self.episode_done = True
                     self.reward = self.reward + 999
                     print("REWARD CALCULATION: crash prevention active")
