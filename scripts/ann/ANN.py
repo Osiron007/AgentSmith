@@ -20,7 +20,12 @@ class ANN(object):
 
         self.init = False
 
-        sess = tf.Session()
+        # aviod TF from allocation all GPU mem
+        # https://stackoverflow.com/questions/34199233/how-to-prevent-tensorflow-from-allocating-the-totality-of-a-gpu-memory
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        sess = tf.Session(config=config)
+        #sess = tf.Session()
         K.set_session(sess)
 
         self.path_to_weights = path_to_weights
