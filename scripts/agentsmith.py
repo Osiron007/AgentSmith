@@ -180,6 +180,9 @@ def ST_EXECUTING():
     # print("a_t shape: ", a_t.shape)
     noise_t = np.zeros([1, params.action_dim])
 
+    ####################################################################################################################
+    # Episode done?
+    ####################################################################################################################
     if episode_done:
         # stop robot movement
         a_t[0][0] = 0.0
@@ -217,6 +220,9 @@ def ST_EXECUTING():
 
         return "ST_RESET_WORLD"
 
+    ####################################################################################################################
+    #First Action in Episode
+    ####################################################################################################################
     if first_action_in_episode:
         print("Episode : " + str(episode))
 
@@ -246,14 +252,15 @@ def ST_EXECUTING():
         if a_t[0][1] > 1:
             a_t[0][1] = 1
 
+        if a_t[0][0] < -1:
+            a_t[0][0] = -1
+        if a_t[0][1] < -1:
+            a_t[0][1] = -1
+
         a_t_transition[0][0] = a_t[0][0]
         a_t_transition[0][1] = a_t[0][1]
 
-        # scale noise action to real action space
-        a_t_ros[0][0] = a_t[0][0] * 3
-        a_t_ros[0][1] = a_t[0][1] * 3
-
-        ros_handler.execute_action(a_t_ros[0])
+        ros_handler.execute_action(a_t[0])
 
         print("Episode", episode, "Step", step, "Action", a_t, "Action_Original", a_t_original_left, " ",
               a_t_original_right, "Noise", noise_t, "Epsilon", params.epsilon)
@@ -263,6 +270,9 @@ def ST_EXECUTING():
         # calculate starting distance for reward calculation
         reward_calculator.calc_starting_distance_for_new_goal(robot_current_map_pose_stamped, goal_pose)
 
+    ####################################################################################################################
+    # NOT first Action in Episode
+    ####################################################################################################################
     else:
         usable = ros_handler.is_state_space_usable()
         while not usable:
@@ -361,14 +371,15 @@ def ST_EXECUTING():
             if a_t[0][1] > 1:
                 a_t[0][1] = 1
 
-            # scale noise action to real action space
-            a_t_ros[0][0] = a_t[0][0] * 3
-            a_t_ros[0][1] = a_t[0][1] * 3
+            if a_t[0][0] < -1:
+                a_t[0][0] = -1
+            if a_t[0][1] < -1:
+                a_t[0][1] = -1
 
             a_t_transition[0][0] = a_t[0][0]
             a_t_transition[0][1] = a_t[0][1]
 
-            ros_handler.execute_action(a_t_ros[0])
+            ros_handler.execute_action(a_t[0])
 
             print("Episode", episode, "Step", step, "Action", a_t, "Action_Original", a_t_original_left, " ",
                   a_t_original_right, "Noise", noise_t, "Epsilon", params.epsilon)

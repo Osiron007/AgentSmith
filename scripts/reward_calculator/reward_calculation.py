@@ -23,8 +23,8 @@ class reward_calculator(object):
         #init np random
         np.random.seed(1337)
 
-
         self.reward = 0.0
+        self.reward_time_penalty = 0.0
         self.episode_done = False
         self.timeout_occurred = False
 
@@ -84,6 +84,7 @@ class reward_calculator(object):
         self.last_distance_to_goal = 0.0
         self.nearest_distance_to_goal = 0.0
         self.distance_traveled = 0.0
+        self.reward_time_penalty = 0.0
 
         self.time_since_last_reward = 0.0
 
@@ -243,6 +244,14 @@ class reward_calculator(object):
                     # robot is not in goal area => reset cnt
                     self.goal_area_reached_cnt = 0
 
+            else:
+                #NOT IN GOAL AREA
+                ###################################
+                #      Reward quick movement      #
+                ###################################
+                self.reward = self.reward + math.fabs(s_t1[0])
+                self.reward = self.reward + math.fabs(s_t1[1])
+
 
             # store current distance for next reward calculation
             self.last_distance_to_goal = distance_to_goal
@@ -258,8 +267,7 @@ class reward_calculator(object):
                     print("REWARD CALCULATION: Robot is moving backwards => penalty -0.1")
                     self.reward = self.reward - 1
 
-            # substract action cost
-            self.reward = self.reward - 1
+
 
 
         if self.episode_done:

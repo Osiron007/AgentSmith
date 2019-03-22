@@ -210,8 +210,8 @@ class ros_environment(object):
         else:
             print("Using a real Robot")
             #topics for wheel control
-            self.sub_joint_state = rospy.Subscriber("/Drives/JointStates", joint_state_msg_type, self.callback_js)
-            self.pub_set_vel = rospy.Publisher('/Drives/Set_Velocities', joint_trajectory_msg_type, queue_size=10)
+            self.sub_joint_state = rospy.Subscriber("/drives/joint_state", joint_state_msg_type, self.callback_js)
+            self.pub_set_vel = rospy.Publisher('/drives/joint_trajectory', joint_trajectory_msg_type, queue_size=10)
 
             # Get an action client
             self.client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
@@ -264,6 +264,8 @@ class ros_environment(object):
         self.goal_position_angular_w = 1.0
 
         self.additional_weight = additional_weight
+
+        self.scale_action_factor = 4
 
         #Robot information
         self.wheel_diameter = wheel_diameter
@@ -333,13 +335,34 @@ class ros_environment(object):
 
         state_as_nparray = np.zeros([self.state_dim])
 
-        state_as_nparray[0] = self.is_omega_left_wheel/4
-        state_as_nparray[1] = self.is_omega_right_wheel/4
+        # normalize from [-6, 6] to [-1, 1]
+        state_as_nparray[0] = self.is_omega_left_wheel/self.scale_action_factor
+        state_as_nparray[1] = self.is_omega_right_wheel/self.scale_action_factor
+
+        print "State Vel Left : " + str(self.is_omega_left_wheel) + "State Vel Right : " + str(
+            self.is_omega_right_wheel)
+        print "Scaled State Vel Left : " + str(state_as_nparray[0]) + "Scaled State Vel Right : " + str(
+            state_as_nparray[1])
+
+
+        #normalize from [-3, 3] to [-1, 1]
+        if self.goal_position_linear_x > 3:
+            self.goal_position_linear_x = 3
+        if self.goal_position_linear_x < -3:
+            self.goal_position_linear_x = -3
+        if self.goal_position_linear_y > 3:
+            self.goal_position_linear_y = 3
+        if self.goal_position_linear_y < -3:
+            self.goal_position_linear_y = -3
 
         state_as_nparray[2] = self.goal_position_linear_x/3
         state_as_nparray[3] = self.goal_position_linear_y/3
 
         state_as_nparray[4] = self.yaw_diff/180
+
+        print "Goal X: " + str(state_as_nparray[2])
+        print "Goal Y: " + str(state_as_nparray[3])
+        print "Goal Alpha: " + str(state_as_nparray[4])
 
 
         #print("GET STATE: X: " + str(self.robot_current_map_pose_stamped.pose.position.x) + " Y: " + str(self.robot_current_map_pose_stamped.pose.position.y))
@@ -354,8 +377,14 @@ class ros_environment(object):
 
         if self.simulation == True:
             #transform wheel rotation to velocity command because simulation can not handle wheel rotation commands
-            self.target_omega_left_wheel = action[0]
-            self.target_omega_right_wheel = action[1]
+
+            print "Action Left : " + str(action[0]) + "Action Right : " + str(action[1])
+
+            # scale noise action to real action space
+            self.target_omega_left_wheel = action[0] * self.scale_action_factor
+            self.target_omega_right_wheel = action[1] * self.scale_action_factor
+
+            print "Scaled Action Left : " + str(self.target_omega_left_wheel) + "Scaled Action Right : " + str(self.target_omega_right_wheel)
 
             #publish cmd_vel to ROS
             self.cmd_vel_msg = twist_msg_type()
@@ -399,8 +428,8 @@ class ros_environment(object):
 
             #add point with target velocities
             current_point_left = joint_trajectory_point_msg_type()
-            current_point_left.velocities.append(action[0])
-            current_point_left.velocities.append(action[1])
+            current_point_left.velocities.append(action[0]*self.scale_action_factor)
+            current_point_left.velocities.append(action[1]*self.scale_action_factor)
             current_point_left.velocities.append(0.0)
             current_point_left.velocities.append(0.0)
             current_jt.points.append(current_point_left)
