@@ -79,7 +79,7 @@ class ros_environment(object):
             while self.transform_available == False and self.error == False:
                 try:
                     #(trans, rot) = self.tflistener.lookupTransform('odom', 'map', rospy.Time(0))
-                    self.robot_current_odom_pose_stamped.header.stamp = self.tflistener.getLatestCommonTime("/map",
+                    self.robot_current_odom_pose_stamped.header.stamp = self.tflistener.getLatestCommonTime("map",
                                                                                                             self.robot_current_odom_pose_stamped.header.frame_id)
                     self.transform_available = True
                     # transform goal from map frame to base_link frame
@@ -215,11 +215,13 @@ class ros_environment(object):
 
             # Get an action client
             self.client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+            print("Waiting for move base .....")
             self.client.wait_for_server()
+            print("Move base available")
 
             # Define the goal
             self.goal = MoveBaseGoal()
-            self.goal.target_pose.header.frame_id = '/map'
+            self.goal.target_pose.header.frame_id = 'map'
             self.goal.target_pose.pose.position.x = 0.0
             self.goal.target_pose.pose.position.y = 0.0
             self.goal.target_pose.pose.position.z = 0.0
@@ -230,7 +232,7 @@ class ros_environment(object):
 
             # Define the goal1
             self.goal1 = MoveBaseGoal()
-            self.goal1.target_pose.header.frame_id = '/map'
+            self.goal1.target_pose.header.frame_id = 'map'
             self.goal1.target_pose.pose.position.x = 1.5
             self.goal1.target_pose.pose.position.y = 0.0
             self.goal1.target_pose.pose.position.z = 0.0

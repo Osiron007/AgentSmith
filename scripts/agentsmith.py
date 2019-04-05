@@ -175,9 +175,11 @@ def ST_EXECUTING():
 
 
     params.epsilon -= 1.0 / params.EXPLORE
+
+    if params.epsilon < 0.1:
+        params.epsilon = 1.0
+
     a_t = np.zeros([1, params.action_dim])
-    a_t_ros = np.zeros([1, params.action_dim])
-    # print("a_t shape: ", a_t.shape)
     noise_t = np.zeros([1, params.action_dim])
 
     ####################################################################################################################

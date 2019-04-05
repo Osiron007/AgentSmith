@@ -249,8 +249,11 @@ class reward_calculator(object):
                 ###################################
                 #      Reward quick movement      #
                 ###################################
-                self.reward = self.reward + math.fabs(s_t1[0])
-                self.reward = self.reward + math.fabs(s_t1[1])
+                print("REWARD CALCULATION: Robot not in goal area -> reward high vel")
+                # math.fabs(s_t1[0]) = ]0,1[
+                # make reward more negative
+                self.reward = self.reward - ((1 + math.fabs(s_t1[0]))/10)
+                self.reward = self.reward - ((1 + math.fabs(s_t1[1]))/10)
 
 
             # store current distance for next reward calculation
@@ -264,7 +267,7 @@ class reward_calculator(object):
             if self.use_backward_penalty:
                 # substract backward cost if robot is moving backwards
                 if wheel_left < 0 and wheel_right > 0:
-                    print("REWARD CALCULATION: Robot is moving backwards => penalty -0.1")
+                    print("REWARD CALCULATION: Robot is moving backwards => penalty -1") #should be -0.5
                     self.reward = self.reward - 1
 
 
@@ -274,6 +277,8 @@ class reward_calculator(object):
             print("REWARD CALCULATION: Episode done")
 
         self.time_last_reward = time()
+
+        print " ----------------------------------- Reward = " + str(self.reward)
 
 
         return [self.reward, self.episode_done, distance_to_goal]
