@@ -43,7 +43,7 @@ class ANN(object):
             #create actor network
             self.actor = ActorNetwork.ActorNetwork(sess, 5, 2)
             #load first weights
-            print("Loading first weights for ANN")
+            print("Loading first weights for ANN from " + str(self.path_to_weights) + "/" + str(self.next_weights_id) + "/actormodel.h5")
             try:
                 self.actor.model.load_weights(
                     str(self.path_to_weights) + "/" + str(self.next_weights_id) + "/actormodel.h5")

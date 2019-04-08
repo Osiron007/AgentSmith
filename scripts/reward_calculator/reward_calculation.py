@@ -111,9 +111,20 @@ class reward_calculator(object):
         wheel_left = s_t1[0] * 4
         wheel_right = s_t1[1] * 4
 
+        # reward parts
+        dist_reward = 0.0
+        outside_high_vel_reward = 0.0
+        move_backward_penalty = 0.0
+        in_goal_area_reward = 0.0
+        inside_smooth_wheel_action_reward = 0.0
+        inside_angle_reward = 0.0
+        inside_move_outside_penalty = 0.0
+
+
         distance_to_goal = 0
 
         if self.first_reward:
+
             # store time for last reward
             self.time_first_reward = time()
             # calc distance to goal
@@ -252,8 +263,8 @@ class reward_calculator(object):
                 print("REWARD CALCULATION: Robot not in goal area -> reward high vel")
                 # math.fabs(s_t1[0]) = ]0,1[
                 # make reward more negative
-                self.reward = self.reward - ((1 + math.fabs(s_t1[0]))/10)
-                self.reward = self.reward - ((1 + math.fabs(s_t1[1]))/10)
+                self.reward = self.reward - ((1 - math.fabs(s_t1[0]))/10)
+                self.reward = self.reward - ((1 - math.fabs(s_t1[1]))/10)
 
 
             # store current distance for next reward calculation
@@ -278,7 +289,9 @@ class reward_calculator(object):
 
         self.time_last_reward = time()
 
-        print " ----------------------------------- Reward = " + str(self.reward)
+        print " --------DEBUG REWARD------------------"
+        print "Dist traveled: " + str(self.reward_factor * self.distance_traveled)
+        print ""
 
 
         return [self.reward, self.episode_done, distance_to_goal]

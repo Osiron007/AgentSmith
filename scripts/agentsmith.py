@@ -387,6 +387,13 @@ def ST_EXECUTING():
                   a_t_original_right, "Noise", noise_t, "Epsilon", params.epsilon)
 
             # wait until next spin for action to take effect
+        else:
+            # episode done
+            # stop robot movement
+            a_t[0][0] = 0.0
+            a_t[0][1] = 0.0
+            ros_handler.execute_action(a_t[0])
+
 
     #print("Episode", episode, "Step", step)
 

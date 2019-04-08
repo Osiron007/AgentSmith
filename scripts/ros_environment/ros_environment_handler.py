@@ -46,6 +46,14 @@ class ros_environment(object):
         self.is_omega_left_wheel = joint_state.velocity[0]
         self.is_omega_right_wheel = joint_state.velocity[1]
 
+        if self.is_omega_left_wheel > 0 and self.is_omega_right_wheel > 0:
+            self.is_omega_left_wheel = self.is_omega_left_wheel * (-1)
+            self.is_omega_right_wheel = self.is_omega_right_wheel * (-1)
+
+        elif self.is_omega_left_wheel < 0 and self.is_omega_right_wheel < 0:
+            self.is_omega_left_wheel = self.is_omega_left_wheel * (-1)
+            self.is_omega_right_wheel = self.is_omega_right_wheel * (-1)
+
 
     def callback_odom(self, odom_msg):
         #print("Odom")
@@ -210,7 +218,7 @@ class ros_environment(object):
         else:
             print("Using a real Robot")
             #topics for wheel control
-            self.sub_joint_state = rospy.Subscriber("/drives/joint_state", joint_state_msg_type, self.callback_js)
+            self.sub_joint_state = rospy.Subscriber("/drives/joint_states", joint_state_msg_type, self.callback_js)
             self.pub_set_vel = rospy.Publisher('/drives/joint_trajectory', joint_trajectory_msg_type, queue_size=10)
 
             # Get an action client
@@ -420,13 +428,13 @@ class ros_environment(object):
             current_jt.joint_names.append("unused")
             current_jt.joint_names.append("unused")
 
-            # if action[0] > 0 and action[1] > 0:
-            #     action[0] = action[0] + (-1)
-            #     action[1] = action[1] + (-1)
-            #
-            # if action[0] < 0 and action[1] < 0:
-            #     action[0] = action[0] + (-1)
-            #     action[1] = action[1] + (-1)
+            if action[0] > 0 and action[1] > 0:
+                action[0] = action[0] * (-1)
+                action[1] = action[1] * (-1)
+
+            if action[0] < 0 and action[1] < 0:
+                action[0] = action[0] * (-1)
+                action[1] = action[1] * (-1)
 
             #add point with target velocities
             current_point_left = joint_trajectory_point_msg_type()
