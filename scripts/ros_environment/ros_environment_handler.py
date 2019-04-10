@@ -21,6 +21,7 @@ from geometry_msgs.msg import PoseStamped as pose_stamped_msg_type
 from rosgraph_msgs.msg import Clock as clock_msg_type
 from sensor_msgs.msg import Joy as joy_msg_type
 from sensor_msgs.msg import LaserScan as laserscann_msg_type
+from neo_msgs.msg import EmergencyStopState as em_stop_state_msg_type
 
 #real robot msgs
 from trajectory_msgs.msg import JointTrajectory as joint_trajectory_msg_type
@@ -38,6 +39,16 @@ import numpy as np
 
 
 class ros_environment(object):
+
+    def callback_em(self, em_stop_state):
+        #print("new em stop states")
+
+        if em_stop_state.emergency_button_stop or em_stop_state.scanner_stop:
+            self.em_stop = True
+        else:
+            self.em_stop = False
+
+
 
 
     def callback_js(self, joint_state):
@@ -175,9 +186,10 @@ class ros_environment(object):
 
 
 
-    def __init__(self, state_space_version, simulation, wheel_diameter, axis_length, state_dim, additional_weight):
+    def __init__(self, state_space_version, simulation, wheel_diameter, axis_length, state_dim, additional_weight,
+                 action_scaling):
 
-        print("ROS ENVIRONMENT HANDLER V0.4")
+        print("ROS ENVIRONMENT HANDLER V0.5")
 
 
         self.init = False
@@ -220,6 +232,7 @@ class ros_environment(object):
             #topics for wheel control
             self.sub_joint_state = rospy.Subscriber("/drives/joint_states", joint_state_msg_type, self.callback_js)
             self.pub_set_vel = rospy.Publisher('/drives/joint_trajectory', joint_trajectory_msg_type, queue_size=10)
+            self.sub_em_stop = rospy.Subscriber("/relayboard_v2/emergency_stop_state", em_stop_state_msg_type, self.callback_em)
 
             # Get an action client
             self.client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
@@ -275,7 +288,7 @@ class ros_environment(object):
 
         self.additional_weight = additional_weight
 
-        self.scale_action_factor = 4
+        self.scale_action_factor = action_scaling
 
         #Robot information
         self.wheel_diameter = wheel_diameter
@@ -333,6 +346,7 @@ class ros_environment(object):
 
         self.error = False
         self.init = True
+        self.em_stop = True
 
     def get_error(self):
         return self.error
@@ -449,7 +463,7 @@ class ros_environment(object):
 
             self.pub_goal_pose.publish(self.goal_pose_stamped_map_frame)
 
-        return  1
+        return 1
 
     def reset_simulation(self):
         if self.simulation == True:
@@ -561,4 +575,7 @@ class ros_environment(object):
 
     def reset_error(self):
         self.error = False
+
+    def get_em_stop(self):
+        return self.em_stop
 

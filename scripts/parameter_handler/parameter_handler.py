@@ -47,6 +47,7 @@ class param_handler(object):
         # robot parameter
         self.wheel_diameter = 0.0
         self.axis_length = 0.0
+        self.action_scaling = 0.0
 
         # reward calculation
         self.reward_version = 0
@@ -98,6 +99,7 @@ class param_handler(object):
         # robot parameter
         self.wheel_diameter = self.config.getfloat("robot", "wheel_diameter")
         self.axis_length = self.config.getfloat("robot", "axis_length")
+        self.action_scaling = self.config.getfloat("robot", "action_scaling")
 
         # reward calculation
         self.reward_version = self.config.getint("reward_calculation", "reward_version")
@@ -149,6 +151,7 @@ class param_handler(object):
         print("##############Robot parameter#####################")
         print("wheel_diameter: " + str(self.wheel_diameter))
         print("axis_length: " + str(self.axis_length))
+        print("action_scaling: " + str(self.action_scaling))
 
         print("#############Reward Calculation###################")
         print("reward_version: " + str(self.reward_version))

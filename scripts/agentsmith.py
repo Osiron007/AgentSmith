@@ -318,7 +318,12 @@ def ST_EXECUTING():
             current_transition.s_t1.append(float(data_s_t1))
 
         current_transition.done = episode_done
-        pub_transition.publish(current_transition)
+
+        if not ros_handler.get_em_stop():
+            pub_transition.publish(current_transition)
+        else:
+            print("--------------------WARNING: EM - STOP ----------------------------------")
+            print("Data will not be published!")
 
 
         states_tmp = np.zeros(params.state_dim)
@@ -457,7 +462,7 @@ if __name__ == '__main__':
     ##########################################
     #                ROS-Node                #
     ##########################################
-    rospy.init_node('SimulationHandlerPython', anonymous=False)
+    rospy.init_node('agentsmith', anonymous=False)
 
     rate = rospy.Rate(params.control_rate)  #Hz
 
@@ -471,14 +476,15 @@ if __name__ == '__main__':
     ##########################################
     global ros_handler
     ros_handler = REH.ros_environment(state_space_version=params.state_space_version, simulation=params.simulation,
-                                      state_dim=params.state_dim ,wheel_diameter=params.wheel_diameter,
-                                      axis_length=params.axis_length, additional_weight=0.0)
+                                      state_dim=params.state_dim, wheel_diameter=params.wheel_diameter,
+                                      axis_length=params.axis_length, additional_weight=0.0,
+                                      action_scaling = params.action_scaling)
 
     ##########################################
     #            noise_generator             #
     ##########################################
     global noise_generator
-    noise_generator = noise_gen.exploration_noise_generator(static_params=False,OU_mu=params.OU_mu,
+    noise_generator = noise_gen.exploration_noise_generator(static_params=False, OU_mu=params.OU_mu,
                                                             OU_theta=params.OU_theta,
                                                             OU_sigma=params.OU_sigma)
 
@@ -497,8 +503,8 @@ if __name__ == '__main__':
     ##########################################
     global reward_calculator
     reward_calculator = RC.reward_calculator(params.goal_max_dist, params.episode_timeout,
-                                             params.distance_reward_factor, params.use_crash_prevention, params.goal_area_x,
-                                             params.goal_area_y, params.goal_area_angle)
+                                             params.distance_reward_factor, params.use_crash_prevention,
+                                             params.goal_area_x, params.goal_area_y, params.goal_area_angle)
 
     ##########################################
     #             gpl_generator              #
@@ -574,7 +580,8 @@ if __name__ == '__main__':
             duration = end_time - start_time
             #print("Duration max: " + str(duration_max))
             if duration.to_sec() > duration_max:
-                msg = 'Loop missed its desired rate of ' + str(params.control_rate) + 'Hz ... it took ' + str(duration.to_sec()) + ' seconds instead of max ' + str(duration_max) + ' seconds'
+                msg = 'Loop missed its desired rate of ' + str(params.control_rate) + 'Hz ... it took ' \
+                      + str(duration.to_sec()) + ' seconds instead of max ' + str(duration_max) + ' seconds'
                 rospy.logwarn(msg)
                 #rospy.logwarn("Duration: " + str(duration.to_sec()))
     finally:
